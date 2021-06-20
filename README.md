@@ -1,11 +1,12 @@
 # CodeReview Application
-This repository is built with Spring-Native version 0.9.2. The purpose of this project is to understand how
+This repository is built with Spring-Native version 0.10.0. The purpose of this project is to understand how
 easy to build a spring-native basic RESTful API that supports
 
+- Reactive API (with Coroutine)
 - Database Access
 - OpenAPI/Swagger integration
 
-In summary, the spring-native project is fairly matured. Almost everything worked out of the box, apart from
+In summary, the spring-native project is fairly easy. Almost everything worked out of the box, apart from
 the OpenApi/Swagger integration where I have to add `@NativeHints` annotation to tell compiler 
 how to deal with types that don't get picked up by the native compiler.
 
@@ -19,6 +20,9 @@ is quite helpful. It has good amount of information about how the GraalVM builds
 At the time of writing, native-java frameworks like Micronaut (version 2.5.3) seems to be faster. 
 The average start up time around 25ms for a HelloWorld Micronaut RESTful service. 
 A similar configured spring-native RESTful service take around 80ms to start.  
+
+The start-up time of this service takes about `300ms`, I think it is quite impressive and further improvements 
+will be made as the project is still in beta.
 
 
 
@@ -65,7 +69,7 @@ As the first cut of the application, security aspect of the application is relax
 
 
 ## Tech Stack
-- Kotlin
+- Kotlin (with Coroutine)
 - Spring Native framework
 - Spring JPA
 - H2 database
@@ -84,7 +88,6 @@ You can also find the OpenAPI definitions as `yaml` format at `http://localhost:
 
 
 ## Spring Native
-
 This project has been configured to let you generate a lightweight container running a native executable.
 Docker should be installed and configured on your machine prior to creating the image, see [the Getting Started section of the reference guide](https://docs.spring.io/spring-native/docs/0.10.0-SNAPSHOT/reference/htmlsingle/#getting-started-buildpacks).
 
@@ -98,4 +101,19 @@ Then, you can run the app like any other container:
 
 ```
 $ docker run --rm -p 8080:8080 codereview:0.0.1-SNAPSHOT
+```
+
+## Executable with Native Build Tools
+Use this option if you want to explore more options such as running your tests in a native image.
+The GraalVM native-image compiler should be installed and configured on your machine, see [the Getting Started section of the reference guide](https://docs.spring.io/spring-native/docs/0.10.0/reference/htmlsingle/#getting-started-native-build-tools).
+
+To create the executable, run the following goal:
+
+```
+$ ./mvnw package -Pnative
+```
+
+Then, you can run the app as follows:
+```
+$ target/codereview
 ```

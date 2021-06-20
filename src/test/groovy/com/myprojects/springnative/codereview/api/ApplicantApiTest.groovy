@@ -5,16 +5,22 @@ import com.myprojects.springnative.codereview.api.response.ApplicantResponse
 import com.myprojects.springnative.codereview.core.domain.Applicant
 import com.myprojects.springnative.codereview.core.domain.Position
 import com.myprojects.springnative.codereview.core.service.ApplicantService
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
 import spock.lang.Specification
 
 class ApplicantApiTest extends Specification {
 
     private ApplicantService applicantService
     private ApplicantApi applicantApi
+    private Continuation continuation
 
     def setup() {
         applicantService = Mock()
         applicantApi = new ApplicantApi(applicantService)
+        continuation = Mock(Continuation) {
+            getContext() >> Mock(CoroutineContext)
+        }
     }
 
     def 'get() should return applicant by id'() {
@@ -23,12 +29,12 @@ class ApplicantApiTest extends Specification {
         def expected = new Applicant(id, 'Test', 'test@gmail.com', '0433123123', new Position('Senior'), [])
 
         when:
-        def applicant = applicantApi.get(id)
+        def applicant = applicantApi.get(id, continuation)
 
         then:
         applicant == ApplicantResponse.@Companion.from(expected, true)
 
-        1 * applicantService.get(id) >> expected
+        1 * applicantService.get(id, _) >> expected
     }
 
     def 'findBy(null) should return all applicants'() {
@@ -38,12 +44,12 @@ class ApplicantApiTest extends Specification {
         def expected = [applicant1, applicant2]
 
         when:
-        def applicants = applicantApi.findBy(null)
+        def applicants = applicantApi.findBy(null, continuation)
 
         then:
         applicants == ApplicantResponse.@Companion.from(expected, false)
 
-        1 * applicantService.list() >> expected
+        1 * applicantService.list(_) >> expected
     }
 
     def 'findBy("test") should return matched applicants'() {
@@ -54,12 +60,12 @@ class ApplicantApiTest extends Specification {
         def expected = [applicant1, applicant2]
 
         when:
-        def applicants = applicantApi.findBy(toFind)
+        def applicants = applicantApi.findBy(toFind, continuation)
 
         then:
         applicants == ApplicantResponse.@Companion.from(expected, false)
 
-        1 * applicantService.findByNameContains(toFind) >> expected
+        1 * applicantService.findByNameContains(toFind, _) >> expected
     }
 
     def 'create() should create a new applicant'() {
@@ -67,10 +73,10 @@ class ApplicantApiTest extends Specification {
         def request = new ApplicantRequest('Test', 'test@gmail.com', '0433123123', 'Senior')
 
         when:
-        applicantApi.create(request)
+        applicantApi.create(request, continuation)
 
         then:
-        1 * applicantService.createOrUpdate(request.toApplicant())
+        1 * applicantService.createOrUpdate(request.toApplicant(), _)
     }
 
     def 'update() should update details for applicant by id'() {
@@ -81,9 +87,9 @@ class ApplicantApiTest extends Specification {
         expected.id = id
 
         when:
-        applicantApi.update(id, request)
+        applicantApi.update(id, request, continuation)
 
         then:
-        1 * applicantService.createOrUpdate(expected)
+        1 * applicantService.createOrUpdate(expected, _)
     }
 }

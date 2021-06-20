@@ -3,6 +3,8 @@ package com.myprojects.springnative.codereview.core.service
 import com.myprojects.springnative.codereview.core.dao.JpaReviewDAO
 import com.myprojects.springnative.codereview.core.domain.Review
 import com.myprojects.springnative.codereview.core.exception.EntityNotFoundException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.List.copyOf
@@ -11,22 +13,25 @@ import javax.persistence.EntityNotFoundException as JpaEntityNotFoundException
 
 @Service
 class ReviewService @Autowired constructor(
-    private val jpaReviewDAO: JpaReviewDAO,
-    private val applicantService: ApplicantService,
-    private val reviewerService: ReviewerService
+        private val jpaReviewDAO: JpaReviewDAO,
+        private val applicantService: ApplicantService,
+        private val reviewerService: ReviewerService
 ) {
-    fun get(id: Long): Review =
-        jpaReviewDAO.fetchById(id).orElseThrow { throw EntityNotFoundException("Review does not exist, id=$id") }
+    suspend fun get(id: Long): Review =
+            jpaReviewDAO.fetchById(id).orElseThrow { throw EntityNotFoundException("Review does not exist, id=$id") }
 
     @Transactional
-    fun create(applicantId: Long, reviewerId: Long, review: Review): Review {
+    suspend fun create(applicantId: Long, reviewerId: Long, review: Review): Review = coroutineScope {
 
         if (review.id != null) throw IllegalStateException("Review already exist")
 
+        val applicantAsync = async { applicantService.get(applicantId) }
+        val reviewerAsync = async { reviewerService.get(reviewerId) }
+
         val scores = copyOf(review.scores)
         review.scores.clear()
-        review.applicant = applicantService.get(applicantId)
-        review.assessedBy = reviewerService.get(reviewerId)
+        review.applicant = applicantAsync.await()
+        review.assessedBy = reviewerAsync.await()
 
         // save the review
         val saved = jpaReviewDAO.save(review)
@@ -36,27 +41,29 @@ class ReviewService @Autowired constructor(
         saved.scores.addAll(scores)
 
         // save the scores
-        return jpaReviewDAO.saveAndFlush(saved)
+        jpaReviewDAO.saveAndFlush(saved)
     }
 
-    fun update(applicantId: Long, reviewerId: Long, review: Review): Review {
+    suspend fun update(applicantId: Long, reviewerId: Long, review: Review): Review = coroutineScope {
         try {
             val reviewRef = jpaReviewDAO.getById(review.id!!)
+            val applicantAsync = async { applicantService.get(applicantId) }
+            val reviewerAsync = async { reviewerService.get(reviewerId) }
 
-            reviewRef.applicant = applicantService.get(applicantId)
-            reviewRef.assessedBy = reviewerService.get(reviewerId)
+            reviewRef.applicant = applicantAsync.await()
+            reviewRef.assessedBy = reviewerAsync.await()
             reviewRef.scores.clear()
             reviewRef.scores.addAll(review.scores)
             reviewRef.comments = review.comments
             reviewRef.feedback = review.feedback
 
-            return jpaReviewDAO.saveAndFlush(reviewRef)
+            jpaReviewDAO.saveAndFlush(reviewRef)
         } catch (error: JpaEntityNotFoundException) {
             throw EntityNotFoundException("Review not found for update", error)
         }
     }
 
 
-    fun findByReviewer(reviewerId: Long): List<Review> =
-        jpaReviewDAO.findAllByAssessedByOrderByDateSubmitted(reviewerService.get(reviewerId))
+    suspend fun findByReviewer(reviewerId: Long): List<Review> =
+            jpaReviewDAO.findAllByAssessedByOrderByDateSubmitted(reviewerService.get(reviewerId))
 }

@@ -5,16 +5,22 @@ import com.myprojects.springnative.codereview.core.dao.JpaReviewerDAO
 import com.myprojects.springnative.codereview.core.domain.Position
 import com.myprojects.springnative.codereview.core.domain.Reviewer
 import com.myprojects.springnative.codereview.core.exception.EntityNotFoundException
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
 import spock.lang.Specification
 
 class ReviewerServiceTest extends Specification {
 
     private ReviewerService reviewerService
     private JpaReviewerDAO jpaReviewerDAO
+    private Continuation continuation
 
     def setup() {
         jpaReviewerDAO = Mock()
         reviewerService = new ReviewerService(jpaReviewerDAO)
+        continuation = Mock(Continuation) {
+            getContext() >> Mock(CoroutineContext)
+        }
     }
 
     def "get() should return a reviewer"() {
@@ -23,7 +29,7 @@ class ReviewerServiceTest extends Specification {
         def expected = new Reviewer(id, "Engineer", new Position("Senior"))
 
         when:
-        def reviewer = reviewerService.get(id)
+        def reviewer = reviewerService.get(id, continuation)
 
         then:
         reviewer == expected
@@ -36,7 +42,7 @@ class ReviewerServiceTest extends Specification {
         def id = 1000000000L
 
         when:
-        reviewerService.get(id)
+        reviewerService.get(id, continuation)
 
         then:
         def error = thrown(EntityNotFoundException)
@@ -52,7 +58,7 @@ class ReviewerServiceTest extends Specification {
         def expected = new Reviewer(id, "Engineer", new Position("Senior"))
 
         when:
-        def saved = reviewerService.createOrUpdate(reviewer)
+        def saved = reviewerService.createOrUpdate(reviewer, continuation)
 
         then:
         saved.id == id
@@ -67,7 +73,7 @@ class ReviewerServiceTest extends Specification {
         def reviewer2 = new Reviewer(2L, "Engineer2", new Position("Tech Lead"))
 
         when:
-        def result = reviewerService.list()
+        def result = reviewerService.list(continuation)
 
         then:
         result == [reviewer1, reviewer2]
@@ -83,7 +89,7 @@ class ReviewerServiceTest extends Specification {
         def reviewer2 = new Reviewer(2L, "Engineer2", new Position("Tech Lead"))
 
         when:
-        def result = reviewerService.findByNameContains(toFind)
+        def result = reviewerService.findByNameContains(toFind, continuation)
 
         then:
         result == [reviewer1, reviewer2]

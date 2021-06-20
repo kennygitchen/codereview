@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("applicants")
 @Tag(name = "Applicant", description = "The Applicant API")
 class ApplicantApi @Autowired constructor(
-    private val applicantService: ApplicantService
+        private val applicantService: ApplicantService
 ) {
     @Operation(summary = "Get details of a applicant by Id")
     @GetMapping(path = ["/{id}"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun get(@PathVariable id: Long): ApplicantResponse {
+    suspend fun get(@PathVariable id: Long): ApplicantResponse {
         LOGGER.info("Find Request received for Applicant, Id=$id")
         return ApplicantResponse.from(applicantService.get(id), true)
     }
@@ -28,7 +28,7 @@ class ApplicantApi @Autowired constructor(
     @Operation(summary = "Add a new applicant")
     @PostMapping(path = [])
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody applicantRequest: ApplicantRequest) {
+    suspend fun create(@RequestBody applicantRequest: ApplicantRequest): Unit {
         LOGGER.info("Create Request received for Applicant")
         applicantService.createOrUpdate(applicantRequest.toApplicant())
     }
@@ -36,14 +36,14 @@ class ApplicantApi @Autowired constructor(
     @Operation(summary = "Update details of a applicant by Id")
     @PutMapping(path = ["/{id}"])
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun update(@PathVariable id: Long, @RequestBody applicantRequest: ApplicantRequest) {
+    suspend fun update(@PathVariable id: Long, @RequestBody applicantRequest: ApplicantRequest): Unit {
         LOGGER.info("Update Request received for Applicant, Id=$id")
         applicantService.createOrUpdate(applicantRequest.toApplicant(id))
     }
 
     @Operation(summary = "Get a list of applicants")
     @GetMapping(path = [])
-    fun findBy(@RequestParam name: String?): List<ApplicantResponse> {
+    suspend fun findBy(@RequestParam name: String?): List<ApplicantResponse> {
         LOGGER.info("FindBy Request received for Applicants")
         return when {
             name != null && name.isNotEmpty() -> ApplicantResponse.from(applicantService.findByNameContains(name))

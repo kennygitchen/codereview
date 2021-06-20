@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("reviewers")
 @Tag(name = "Reviewer", description = "The Reviewer API")
 class ReviewerApi @Autowired constructor(
-    private val reviewerService: ReviewerService
+        private val reviewerService: ReviewerService
 ) {
     @Operation(summary = "Get details of a reviewer by Id")
     @GetMapping(path = ["/{id}"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun get(@PathVariable id: Long): ReviewerResponse {
+    suspend fun get(@PathVariable id: Long): ReviewerResponse {
         LOGGER.info("Find Request received for Reviewer, Id=$id")
         return ReviewerResponse.from(reviewerService.get(id))
     }
@@ -28,7 +28,7 @@ class ReviewerApi @Autowired constructor(
     @Operation(summary = "Add a new reviewer")
     @PostMapping(path = [])
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody reviewerRequest: ReviewerRequest) {
+    suspend fun create(@RequestBody reviewerRequest: ReviewerRequest): Unit {
         LOGGER.info("Create Request received for Reviewer")
         reviewerService.createOrUpdate(reviewerRequest.toReviewer())
     }
@@ -36,14 +36,14 @@ class ReviewerApi @Autowired constructor(
     @Operation(summary = "Update details of a reviewer by Id")
     @PutMapping(path = ["/{id}"])
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun update(@PathVariable id: Long, @RequestBody reviewerRequest: ReviewerRequest) {
+    suspend fun update(@PathVariable id: Long, @RequestBody reviewerRequest: ReviewerRequest): Unit {
         LOGGER.info("Update Request received for Reviewer, Id=$id")
         reviewerService.createOrUpdate(reviewerRequest.toReviewer(id))
     }
 
     @Operation(summary = "Get a list of reviewers")
     @GetMapping(path = [])
-    fun findBy(@RequestParam name: String?): List<ReviewerResponse> {
+    suspend fun findBy(@RequestParam name: String?): List<ReviewerResponse> {
         LOGGER.info("FindBy Request received for Reviewers")
         return when {
             name != null && name.isNotEmpty() -> ReviewerResponse.from(reviewerService.findByNameContains(name))

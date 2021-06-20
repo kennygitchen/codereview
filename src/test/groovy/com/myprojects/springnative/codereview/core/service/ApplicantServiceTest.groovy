@@ -4,16 +4,22 @@ import com.myprojects.springnative.codereview.core.dao.JpaApplicantDAO
 import com.myprojects.springnative.codereview.core.domain.Applicant
 import com.myprojects.springnative.codereview.core.domain.Position
 import com.myprojects.springnative.codereview.core.exception.EntityNotFoundException
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
 import spock.lang.Specification
 
 class ApplicantServiceTest extends Specification {
 
     private ApplicantService applicantService
     private JpaApplicantDAO jpaApplicantDAO
+    private Continuation continuation
 
     def setup() {
         jpaApplicantDAO = Mock()
         applicantService = new ApplicantService(jpaApplicantDAO)
+        continuation = Mock(Continuation) {
+            getContext() >> Mock(CoroutineContext)
+        }
     }
 
     def "get() should return a applicant"() {
@@ -22,7 +28,7 @@ class ApplicantServiceTest extends Specification {
         def expected = new Applicant(id, "applicant", "applicant@gmail.com", "0433211211", new Position("Senior"), [])
 
         when:
-        def reviewer = applicantService.get(id)
+        def reviewer = applicantService.get(id, continuation)
 
         then:
         reviewer == expected
@@ -35,7 +41,7 @@ class ApplicantServiceTest extends Specification {
         def id = 1000000000L
 
         when:
-        applicantService.get(id)
+        applicantService.get(id, continuation)
 
         then:
         def error = thrown(EntityNotFoundException)
@@ -51,7 +57,7 @@ class ApplicantServiceTest extends Specification {
         def expected = new Applicant(id, "applicant", "applicant@gmail.com", "0433211211", new Position("Senior"), [])
 
         when:
-        def saved = applicantService.createOrUpdate(reviewer)
+        def saved = applicantService.createOrUpdate(reviewer, continuation)
 
         then:
         saved.id == id
@@ -66,7 +72,7 @@ class ApplicantServiceTest extends Specification {
         def applicant2 = new Applicant(2L, "applicant2", "applicant2@gmail.com", "0433211212", new Position("Graduate"), [])
 
         when:
-        def result = applicantService.list()
+        def result = applicantService.list(continuation)
 
         then:
         result == [applicant1, applicant2]
@@ -82,7 +88,7 @@ class ApplicantServiceTest extends Specification {
         def applicant2 = new Applicant(2L, "applicant2", "applicant2@gmail.com", "0433211212", new Position("Graduate"), [])
 
         when:
-        def result = applicantService.findByNameContains(searchText)
+        def result = applicantService.findByNameContains(searchText, continuation)
 
         then:
         result == [applicant1, applicant2]

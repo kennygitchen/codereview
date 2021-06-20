@@ -1,9 +1,16 @@
 package com.myprojects.springnative.codereview.core.service
 
 import com.myprojects.springnative.codereview.DataBuilder
+import com.myprojects.springnative.codereview.TestUtil
 import com.myprojects.springnative.codereview.core.dao.JpaReviewDAO
 import com.myprojects.springnative.codereview.core.exception.EntityNotFoundException
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.BuildersKt
 import spock.lang.Specification
+
+import static com.myprojects.springnative.codereview.TestUtil.testRunBlocking
 
 class ReviewServiceTest extends Specification {
 
@@ -11,12 +18,16 @@ class ReviewServiceTest extends Specification {
     private JpaReviewDAO jpaReviewDAO
     private ApplicantService applicantService
     private ReviewerService reviewerService
+    private Continuation continuation
 
     def setup() {
         jpaReviewDAO = Mock()
         applicantService = Mock()
         reviewerService = Mock()
         reviewService = new ReviewService(jpaReviewDAO, applicantService, reviewerService)
+        continuation = Mock(Continuation) {
+            getContext() >> Mock(CoroutineContext)
+        }
     }
 
     def "get() should return a review"() {
@@ -26,7 +37,7 @@ class ReviewServiceTest extends Specification {
         def expected = DataBuilder.review(1L, applicant, reviewer)
 
         when:
-        def review = reviewService.get(expected.id)
+        def review = reviewService.get(expected.id, continuation)
 
         then:
         review == expected
@@ -39,7 +50,7 @@ class ReviewServiceTest extends Specification {
         def id = 1000000000L
 
         when:
-        reviewService.get(id)
+        reviewService.get(id, continuation)
 
         then:
         def error = thrown(EntityNotFoundException)
@@ -57,14 +68,19 @@ class ReviewServiceTest extends Specification {
         def expected = DataBuilder.review(id, applicant, reviewer)
 
         when:
-        def saved = reviewService.create(applicant.id, reviewer.id, newReview)
+        def saved = testRunBlocking {
+            scope, continuation -> reviewService.create(applicant.id, reviewer.id, newReview, continuation)
+        }
+
+
+        //def saved = reviewService.create(applicant.id, reviewer.id, newReview, continuation)
 
         then:
         saved.id == id
         saved == expected
 
-        1 * applicantService.get(applicant.id) >> applicant
-        1 * reviewerService.get(reviewer.id) >> reviewer
+        1 * applicantService.get(applicant.id, _) >> applicant
+        1 * reviewerService.get(reviewer.id, _) >> reviewer
         1 * jpaReviewDAO.save(_) >> {
             assert arguments[0].id == null
             assert arguments[0].applicant == applicant
@@ -87,13 +103,15 @@ class ReviewServiceTest extends Specification {
         def newReview = DataBuilder.review(id, null, null)
 
         when:
-        reviewService.create(applicant.id, reviewer.id, newReview)
+        testRunBlocking {
+            scope, continuation -> reviewService.create(applicant.id, reviewer.id, newReview, continuation)
+        }
 
         then:
         thrown(IllegalStateException)
 
-        0 * applicantService.get(_)
-        0 * reviewerService.get(_)
+        0 * applicantService.get(_, _)
+        0 * reviewerService.get(_, _)
         0 * jpaReviewDAO.save(_)
         0 * jpaReviewDAO.saveAndFlush(_)
     }
@@ -107,15 +125,19 @@ class ReviewServiceTest extends Specification {
         def expected = DataBuilder.review(id, applicant, reviewer)
 
         when:
-        def saved = reviewService.update(applicant.id, reviewer.id, review)
-
+        BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE) {
+            scope, continuation ->
+        }
+        def saved = testRunBlocking {
+            scope, continuation -> reviewService.update(applicant.id, reviewer.id, review, continuation)
+        }
         then:
         saved.id == id
         saved == expected
 
         1 * jpaReviewDAO.getById(id) >> expected
-        1 * applicantService.get(applicant.id) >> applicant
-        1 * reviewerService.get(reviewer.id) >> reviewer
+        1 * applicantService.get(applicant.id, _) >> applicant
+        1 * reviewerService.get(reviewer.id, _) >> reviewer
         1 * jpaReviewDAO.saveAndFlush(expected) >> expected
     }
 
@@ -127,14 +149,14 @@ class ReviewServiceTest extends Specification {
         def review = DataBuilder.review(id, null, null)
 
         when:
-        reviewService.update(applicant.id, reviewer.id, review)
+        reviewService.update(applicant.id, reviewer.id, review, continuation)
 
         then:
         thrown(EntityNotFoundException)
 
         1 * jpaReviewDAO.getById(id) >> { throw new javax.persistence.EntityNotFoundException() }
-        0 * applicantService.get(_)
-        0 * reviewerService.get(_)
+        0 * applicantService.get(_, _)
+        0 * reviewerService.get(_, _)
         0 * jpaReviewDAO.saveAndFlush(_)
     }
 
@@ -146,12 +168,12 @@ class ReviewServiceTest extends Specification {
         def expected = DataBuilder.review(id, applicant, reviewer)
 
         when:
-        def reviews = reviewService.findByReviewer(reviewer.id)
+        def reviews = reviewService.findByReviewer(reviewer.id, continuation)
 
         then:
         reviews == [expected]
 
-        1 * reviewerService.get(reviewer.id) >> reviewer
+        1 * reviewerService.get(reviewer.id, _) >> reviewer
         1 * jpaReviewDAO.findAllByAssessedByOrderByDateSubmitted(reviewer) >> [expected]
     }
 }
