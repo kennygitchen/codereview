@@ -18,6 +18,10 @@ Parameters:
   GitHubAccessToken:
     Type: String
 
+  CodeBuildEnvImage:
+    Type: String
+    Default: 'aws/codebuild/standard:4.0'
+
 Resources:
   CodeBuildServiceRole:
     Type: 'AWS::IAM::Role'
@@ -75,6 +79,7 @@ Resources:
       AuthType: PERSONAL_ACCESS_TOKEN
       ServerType: GITHUB
       Token: !Ref GitHubAccessToken
+
   CodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
@@ -101,7 +106,43 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:4.0
+        Image: !Ref CodeBuildEnvImage
+
+  CodeBuildProjectDeployDev:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub '${GitHubRepository}-dev'
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: deployspec.yaml
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: !Ref CodeBuildEnvImage
+        EnvironmentVariables:
+          - Name: ENV_NAME
+            Value: dev
+
+  CodeBuildProjectDeployProd:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub '${GitHubRepository}-prod'
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: deployspec.yaml
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: !Ref CodeBuildEnvImage
+        EnvironmentVariables:
+          - Name: ENV_NAME
+            Value: prod
 
   # copy of CodeBuildServiceRole with few details changed.
   CodePipelineServiceRole:
@@ -215,5 +256,37 @@ Resources:
                 - Name: BuildOutput
               InputArtifacts:
                 - Name: SourceCode
-
-
+        - Name: Dev
+          Actions:
+              - Name: Deploy
+                ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Provider: CodeBuild
+                  Version: '1'
+                Configuration:
+                  ProjectName: !Ref CodeBuildProjectDeployDev
+                InputArtifacts:
+                  - Name: BuildOutput
+        - Name: Prod
+          Actions:
+            - Name: Deploy
+              RunOrder: 1
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref CodeBuildProjectDeployProd
+              InputArtifacts:
+                - Name: BuildOutput
+            - Name: Approval
+              RunOrder: 2
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Configuration:
+                CustomData: Approve for Production

@@ -1,9 +1,5 @@
 version: 0.2
 
-#env:
-#  variables:
-#    JAVA_HOME: "/usr/lib/jvm/java-11-openjdk-amd64"
-
 phases:
   install:
     runtime-versions:
@@ -22,15 +18,15 @@ phases:
       - echo Build started on `date`
       - sh mvnw clean install
       - echo Build finished on `date`
-#  post_build:
-#    commands:
-#      - echo Entering post_build phase...
-#      - echo Build completed on `date`
-#      - mv target/application.jar application.jar
+  post_build:
+    commands:
+      - echo Entering post_build phase...
+      - echo Create deployment jar
+      - mv target/*.jar codereview.jar
 #  artifacts:
 #    type: zip
 #    files:
-#      - application.jar
+#      - codereview.jar
 
 
 
