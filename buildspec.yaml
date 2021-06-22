@@ -23,10 +23,9 @@ phases:
       - echo Entering post_build phase...
       - echo Create deployment jar
       - mv target/*.jar codereview.jar
-#  artifacts:
-#    type: zip
-#    files:
-#      - codereview.jar
+artifacts:
+  files:
+    - '**/*'
 
 
 
