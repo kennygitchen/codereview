@@ -1,0 +1,90 @@
+version: 0.2
+
+#env:
+#  variables:
+#    JAVA_HOME: "/usr/lib/jvm/java-11-openjdk-amd64"
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto11
+  pre_build:
+    commands:
+      - echo Enter the pre-build phase...
+      - echo "Environment details:"
+      - sh mvnw --version
+      - java -version
+      - echo "git details:"
+      - git log --name-status HEAD^..HEAD
+  build:
+    commands:
+      - echo Enter the build phase...
+      - echo Build started on `date`
+      - sh mvnw clean install
+      - echo Build finished on `date`
+#  post_build:
+#    commands:
+#      - echo Entering post_build phase...
+#      - echo Build completed on `date`
+#      - mv target/application.jar application.jar
+#  artifacts:
+#    type: zip
+#    files:
+#      - application.jar
+
+
+
+
+#phases:
+#  install:
+#    commands:
+#      - echo Entered the install phase...
+#      - apt-get update -y
+#      - apt-get install -y maven
+#    finally:
+#      - echo This always runs even if the update or install command fails
+#  pre_build:
+#    commands:
+#      - echo Entered the pre_build phase...
+#      - docker login -u User -p $LOGIN_PASSWORD
+#    finally:
+#      - echo This always runs even if the login command fails
+#  build:
+#    commands:
+#      - echo Entered the build phase...
+#      - echo Build started on `date`
+#      - mvn install
+#    finally:
+#      - echo This always runs even if the install command fails
+#  post_build:
+#    commands:
+#      - echo Entered the post_build phase...
+#      - echo Build completed on `date`
+
+#reports:
+#  arn:aws:codebuild:your-region:your-aws-account-id:report-group/report-group-name-1:
+#    files:
+#      - "**/*"
+#    base-directory: 'target/tests/reports'
+#    discard-paths: no
+#  reportGroupCucumberJson:
+#    files:
+#      - 'cucumber/target/cucumber-tests.xml'
+#    discard-paths: yes
+#    file-format: CUCUMBERJSON # default is JUNITXML
+#artifacts:
+#  files:
+#    - target/messageUtil-1.0.jar
+#  discard-paths: yes
+#  secondary-artifacts:
+#    artifact1:
+#      files:
+#        - target/artifact-1.0.jar
+#      discard-paths: yes
+#    artifact2:
+#      files:
+#        - target/artifact-2.0.jar
+#      discard-paths: yes
+#cache:
+#  paths:
+#    - '/root/.m2/**/*'
