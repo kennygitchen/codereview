@@ -1,0 +1,17 @@
+version: 0.2
+
+env:
+  variables:
+    ENV_NAME: dev
+
+phases:
+  build:
+    commands:
+      - echo Enter the deploy phase...
+      - echo Deploy started on `date`
+      - echo Deploying to $ENV_NAME environment
+
+artifacts:
+  files:
+    - 'codereview.jar'
+
