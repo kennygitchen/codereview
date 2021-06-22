@@ -82,14 +82,14 @@ Resources:
       Triggers:
         Webhook: true
         FilterGroups:
+#          # =====================================================
+#          # This filter sets up any branch that creates/update/reopen a PR; targeting the ${GitHubBranch} branch
            - - Type: EVENT
                Pattern: PULL_REQUEST_CREATED,PULL_REQUEST_UPDATED,PULL_REQUEST_REOPENED
              - Type: BASE_REF
                Pattern: !Sub ^refs/heads/${GitHubBranch}$
-#          - - Type: EVENT
-#              Pattern: PULL_REQUEST_CREATED,PULL_REQUEST_UPDATED,PULL_REQUEST_REOPENED
-#            - Type: BASE_REF
-#              Pattern: !Sub ^refs/heads/${GitHubBranch}$
+#          # =====================================================
+#          # This filter filters on any branch that pushes a commit
 #          - - Type: EVENT
 #              Pattern: PUSH
 #            - Type: HEAD_REF
