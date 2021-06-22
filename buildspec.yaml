@@ -15,7 +15,8 @@ phases:
       - sh mvnw --version
       - java -version
       - echo "git details:"
-      - git log --name-status HEAD^..HEAD
+      - git rev-parse --abbrev-ref HEAD
+#      - git log --name-status HEAD^..HEAD
   build:
     commands:
       - echo Enter the build phase...
