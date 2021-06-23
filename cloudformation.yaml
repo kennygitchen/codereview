@@ -78,6 +78,18 @@ Resources:
                   - "codestar-connections:GetConnection"
                 Resource: '*'
                 Effect: Allow
+              - Sid: ECRPolicy
+                Action:
+                  - "ecr:BatchGetImage"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:CompleteLayerUpload"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:InitiateLayerUpload"
+                  - "ecr:PutImage"
+                  - "ecr:UploadLayerPart"
+                  - "ecr:GetAuthorizationToken"
+                Effect: Allow
+                Resource: '*'
 
   # copy of CodeBuildServiceRole with few details changed.
   CodePipelineServiceRole:
@@ -170,6 +182,7 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: !Ref CodeBuildEnvImage
+        PrivilegedMode: true
 
   CodeBuildProjectDeployDev:
     Type: 'AWS::CodeBuild::Project'
