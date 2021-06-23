@@ -123,6 +123,12 @@ Resources:
                   - 'codebuild:StartBuild'
                 Resource: '*'
                 Effect: Allow
+              - Sid: ConnectionsFullAccess
+                Action:
+                  - "codestar-connections:UseConnection"
+                  - "codestar-connections:GetConnection"
+                Resource: '*'
+                Effect: Allow
 
   CodeBuildSourceCredential:
     Type: 'AWS::CodeBuild::SourceCredential'
@@ -244,16 +250,16 @@ Resources:
                 - Name: SourceCode
         - Name: Dev
           Actions:
-              - Name: Deploy
-                ActionTypeId:
-                  Category: Build
-                  Owner: AWS
-                  Provider: CodeBuild
-                  Version: '1'
-                Configuration:
-                  ProjectName: !Ref CodeBuildProjectDeployDev
-                InputArtifacts:
-                  - Name: BuildOutput
+            - Name: Deploy
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref CodeBuildProjectDeployDev
+              InputArtifacts:
+                - Name: BuildOutput
         - Name: Prod
           Actions:
             - Name: Deploy
