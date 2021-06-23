@@ -118,5 +118,5 @@ Then, you can run the app as follows:
 $ target/codereview
 ```
 
-# AWS CI/CD setup ref
+## AWS CI/CD setup reference
 Ref: https://www.youtube.com/watch?v=FuXpwLiMI_Q
