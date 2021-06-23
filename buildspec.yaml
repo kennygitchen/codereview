@@ -10,8 +10,8 @@ phases:
       - echo "Environment details:"
       - sh mvnw --version
       - java -version
-#      - echo "git details:"
-#      - git log --name-status HEAD^..HEAD
+      - echo "git details:"
+      - git log --name-status HEAD^..HEAD
   build:
     commands:
       - echo Enter the build phase...

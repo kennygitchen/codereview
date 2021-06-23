@@ -201,22 +201,6 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 
-  CodePipelineWebhook:
-    Type: AWS::CodePipeline::Webhook
-    Properties:
-      Authentication: GITHUB_HMAC
-      AuthenticationConfiguration:
-        SecretToken: !Ref GitHubAccessToken
-      RegisterWithThirdParty: true
-      Filters:
-        - JsonPath: '$.ref'
-          MatchEquals: 'refs/heads/{Branch}'
-        - JsonPath: '$.repository.name'
-          MatchEquals: '{Repo}'
-      TargetPipeline: !Ref CodePipeline
-      TargetAction: Source
-      TargetPipelineVersion: !GetAtt CodePipeline.Version
-
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -231,15 +215,17 @@ Resources:
             - Name: Source
               ActionTypeId:
                 Category: Source
-                Owner: ThirdParty
+                Owner: AWS
                 Version: 1
-                Provider: GitHub
+                Provider: CodeStarSourceConnection
               Configuration:
-                Owner: !Ref GitHubOwner
-                Repo: !Ref GitHubRepository
-                Branch: !Ref GitHubBranch
-                PollForSourceChanges: false
-                OAuthToken: !Ref GitHubAccessToken
+                # this ARN is created via CLI or "GitHub Console"
+                # DOC: https://docs.aws.amazon.com/dtconsole/latest/userguide/connections-create-github.html
+                # AWS Console: https://console.aws.amazon.com/codesuite/settings/connections?region=us-east-1&connections-meta=eyJmIjp7InRleHQiOiIifSwicyI6e30sIm4iOjIwLCJpIjowfQ
+                ConnectionArn: "arn:aws:codestar-connections:us-east-1:351762539201:connection/6f099bbb-5194-40a1-a02f-11ca8051d4d2"
+                FullRepositoryId: !Sub '${GitHubOwner}/${GitHubRepository}'
+                BranchName: !Ref GitHubBranch
+                OutputArtifactFormat: CODEBUILD_CLONE_REF
               OutputArtifacts:
                 - Name: SourceCode
         - Name: Build
