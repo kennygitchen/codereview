@@ -72,6 +72,12 @@ Resources:
                   - 's3:GetBucketLocation'
                 Resource:
                   - '*'
+              - Sid: ConnectionsFullAccess
+                Action:
+                  - "codestar-connections:UseConnection"
+                  - "codestar-connections:GetConnection"
+                Resource: '*'
+                Effect: Allow
 
   # copy of CodeBuildServiceRole with few details changed.
   CodePipelineServiceRole:
