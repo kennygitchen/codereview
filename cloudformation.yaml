@@ -22,7 +22,15 @@ Parameters:
     Type: String
     Default: 'aws/codebuild/standard:4.0'
 
+  FargateServiceSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+
 Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${AWS::StackName}
+
   CodeBuildServiceRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -102,6 +110,10 @@ Resources:
             Principal:
               Service: codepipeline.amazonaws.com
             Action: 'sts:AssumeRole'
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -147,13 +159,65 @@ Resources:
                   - "codestar-connections:GetConnection"
                 Resource: '*'
                 Effect: Allow
-
+              - Sid: ECSPolicy
+                Action:
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:BatchGetImage"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: '*'
+                Effect: Allow
   CodeBuildSourceCredential:
     Type: 'AWS::CodeBuild::SourceCredential'
     Properties:
       AuthType: PERSONAL_ACCESS_TOKEN
       ServerType: GITHUB
       Token: !Ref GitHubAccessToken
+
+  FargateTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: codereview-definition
+      RequiresCompatibilities:
+        - FARGATE
+      Memory: 512
+      Cpu: 256
+      NetworkMode: "awsvpc"
+      ExecutionRoleArn: !Ref CodePipelineServiceRole
+      ContainerDefinitions:
+        - Name: codereview
+          Image: 351762539201.dkr.ecr.us-east-1.amazonaws.com/codereview
+          Essential: true
+          Memory: 512
+          PortMappings:
+            - ContainerPort: 8080
+              HostPort: 8080
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroup
+              awslogs-stream-prefix: !Ref AWS::StackName
+
+
+  FargateServiceDev:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: 'codereview-service-dev'
+      Cluster: 'codereview-dev-cluster'
+      # change this number to 1 or more if need service to start automatically
+      DesiredCount: 1
+      TaskDefinition: !Ref FargateTaskDefinition
+      LaunchType: FARGATE
+      DeploymentConfiguration:
+        MaximumPercent: 300
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Ref FargateServiceSubnets
 
   CodeBuildProject:
     Type: 'AWS::CodeBuild::Project'

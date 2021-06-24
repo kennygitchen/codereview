@@ -119,4 +119,10 @@ $ target/codereview
 ```
 
 ## AWS CI/CD setup reference
-Ref: https://www.youtube.com/watch?v=FuXpwLiMI_Q
+The automated CI/CD is setup with AWS CloudFormation. The file `cloudformation.yaml` contains most of the details.
+
+The ECR is created manually (they are not included in the cloudformation.yaml). 
+### Reference link for CI/CD
+- [create the ECR repository](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-create.html)
+- [create CodePipeline with CloudFormation](https://www.youtube.com/watch?v=FuXpwLiMI_Q)
+
