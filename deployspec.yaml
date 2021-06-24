@@ -9,9 +9,7 @@ phases:
     commands:
       - echo Enter the deploy phase...
       - echo Deploy started on `date`
-      - echo Deploying to $ENV_NAME environment
-
-artifacts:
-  files:
-    - 'codereview.jar'
+      - echo Deploying to $ENV_NAME environment started...
+      - aws ecs update-service --cluster arn:aws:ecs:us-east-1:351762539201:cluster/codereview-dev-cluster --service arn:aws:ecs:us-east-1:351762539201:service/codereview-dev-cluster/codereview-service-dev --force-new-deployment
+      - echo Deploying to $ENV_NAME environment finished...
 

@@ -98,6 +98,11 @@ Resources:
                   - "ecr:GetAuthorizationToken"
                 Effect: Allow
                 Resource: '*'
+              - Sid: ECSPolicy
+                Action:
+                  - "ecs:UpdateService"
+                Resource: '*'
+                Effect: Allow
 
   # copy of CodeBuildServiceRole with few details changed.
   CodePipelineServiceRole:
@@ -159,7 +164,7 @@ Resources:
                   - "codestar-connections:GetConnection"
                 Resource: '*'
                 Effect: Allow
-              - Sid: ECSPolicy
+              - Sid: ECRPolicy
                 Action:
                   - "ecr:GetAuthorizationToken"
                   - "ecr:BatchCheckLayerAvailability"
@@ -169,6 +174,7 @@ Resources:
                   - "logs:PutLogEvents"
                 Resource: '*'
                 Effect: Allow
+
   CodeBuildSourceCredential:
     Type: 'AWS::CodeBuild::SourceCredential'
     Properties:
@@ -188,7 +194,7 @@ Resources:
       ExecutionRoleArn: !Ref CodePipelineServiceRole
       ContainerDefinitions:
         - Name: codereview
-          Image: 351762539201.dkr.ecr.us-east-1.amazonaws.com/codereview
+          Image: 351762539201.dkr.ecr.us-east-1.amazonaws.com/codereview:latest
           Essential: true
           Memory: 512
           PortMappings:
@@ -202,18 +208,19 @@ Resources:
               awslogs-group: !Ref LogGroup
               awslogs-stream-prefix: !Ref AWS::StackName
 
-
   FargateServiceDev:
     Type: AWS::ECS::Service
     Properties:
       ServiceName: 'codereview-service-dev'
-      Cluster: 'codereview-dev-cluster'
+      Cluster: 'arn:aws:ecs:us-east-1:351762539201:cluster/codereview-dev-cluster'
       # change this number to 1 or more if need service to start automatically
       DesiredCount: 1
       TaskDefinition: !Ref FargateTaskDefinition
       LaunchType: FARGATE
       DeploymentConfiguration:
         MaximumPercent: 300
+      DeploymentController:
+        Type: ECS
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
@@ -334,18 +341,6 @@ Resources:
         - Name: Dev
           Actions:
             - Name: Deploy
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Provider: CodeBuild
-                Version: '1'
-              Configuration:
-                ProjectName: !Ref CodeBuildProjectDeployDev
-              InputArtifacts:
-                - Name: BuildOutput
-        - Name: Prod
-          Actions:
-            - Name: Deploy
               RunOrder: 1
               ActionTypeId:
                 Category: Build
@@ -353,7 +348,7 @@ Resources:
                 Provider: CodeBuild
                 Version: '1'
               Configuration:
-                ProjectName: !Ref CodeBuildProjectDeployProd
+                ProjectName: !Ref CodeBuildProjectDeployDev
               InputArtifacts:
                 - Name: BuildOutput
             - Name: Approval
@@ -365,3 +360,15 @@ Resources:
                 Version: '1'
               Configuration:
                 CustomData: Approve for Production
+        - Name: Prod
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref CodeBuildProjectDeployProd
+              InputArtifacts:
+                - Name: BuildOutput
