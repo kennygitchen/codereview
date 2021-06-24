@@ -24,40 +24,12 @@ phases:
       - echo Post-Build Phase started...
       - echo Create docker image
       - chmod +x docker/docker-build.sh
-      - sh if [ $(git branch --show-current) == "master" ]; then docker/docker-build.sh; fi
+      - sh docker/docker-build.sh
       - echo Post-Build finished...
 artifacts:
   files:
     - '**/*'
 
-
-
-
-#phases:
-#  install:
-#    commands:
-#      - echo Entered the install phase...
-#      - apt-get update -y
-#      - apt-get install -y maven
-#    finally:
-#      - echo This always runs even if the update or install command fails
-#  pre_build:
-#    commands:
-#      - echo Entered the pre_build phase...
-#      - docker login -u User -p $LOGIN_PASSWORD
-#    finally:
-#      - echo This always runs even if the login command fails
-#  build:
-#    commands:
-#      - echo Entered the build phase...
-#      - echo Build started on `date`
-#      - mvn install
-#    finally:
-#      - echo This always runs even if the install command fails
-#  post_build:
-#    commands:
-#      - echo Entered the post_build phase...
-#      - echo Build completed on `date`
 
 #reports:
 #  arn:aws:codebuild:your-region:your-aws-account-id:report-group/report-group-name-1:
