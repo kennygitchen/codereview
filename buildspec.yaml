@@ -24,7 +24,10 @@ phases:
       - echo Post-Build Phase started...
       - echo Create docker image
       - chmod +x docker/docker-build.sh
-      - sh if [ $(git branch --show-current) == "master" ]; then docker/docker-build.sh; fi
+      - |-
+            if [ $(git branch --show-current) == "master" ]
+              then docker/docker-build.sh
+            fi
       - echo Post-Build finished...
 artifacts:
   files:
