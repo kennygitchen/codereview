@@ -25,7 +25,7 @@ phases:
       - echo Create docker image
       - chmod +x docker/docker-build.sh
       - |-
-            if [ $(git branch --show-current) == "master" ]
+            if [ "$(git branch --show-current)" = "master" ]
               then docker/docker-build.sh
             fi
       - echo Post-Build finished...
